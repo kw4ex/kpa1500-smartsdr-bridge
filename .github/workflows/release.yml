@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: MIT
+# Publishes a GitHub Release from files in this repository, with notes from
+# docs/release-notes/<tag>.md. Run it from the Actions tab (Publish release > Run workflow).
+name: Publish release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create, e.g. v1.0.0"
+        required: true
+      title:
+        description: "Release title"
+        required: true
+      latest:
+        description: "Mark as the Latest release (true or false)"
+        required: true
+        default: "true"
+      assets:
+        description: "Files to attach, separated by | (paths in the repository)"
+        required: true
+      zip_name:
+        description: "Optional: name of a .zip to build from zip_files and attach"
+        required: false
+        default: ""
+      zip_files:
+        description: "Optional: files for that zip, separated by |"
+        required: false
+        default: ""
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Create the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          TITLE: ${{ inputs.title }}
+          ASSETS: ${{ inputs.assets }}
+          ZIP_NAME: ${{ inputs.zip_name }}
+          ZIP_FILES: ${{ inputs.zip_files }}
+        run: |
+          set -euo pipefail
+          mkdir -p dl
+          IFS='|' read -ra A <<< "$ASSETS"
+          for f in "${A[@]}"; do cp "$f" dl/; done
+          if [ -n "$ZIP_NAME" ]; then
+            IFS='|' read -ra Z <<< "$ZIP_FILES"
+            zip -q "dl/$ZIP_NAME" "${Z[@]}"
+          fi
+          ls -l dl
+          notes="docs/release-notes/${TAG}.md"; test -f "$notes"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dl/* --clobber
+            gh release edit "$TAG" --title "$TITLE" --notes-file "$notes"
+          else
+            gh release create "$TAG" dl/* --target "${{ github.sha }}" --title "$TITLE" --notes-file "$notes" --latest="${{ inputs.latest }}"
+          fi

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KPA1500 SmartSDR Bridge - Guide</title>
+<style>
+:root{--ink:#1c2430;--mut:#566273;--acc:#0b5cad;--bg:#fff;--box:#eef4fb;--warn:#fff4dc;--line:#cfd8e3}
+*{box-sizing:border-box}
+body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);margin:0}
+main{max-width:46rem;margin:0 auto;padding:1.5rem 1rem 3rem}
+h1{font-size:1.8rem;margin:.2rem 0}
+h2{font-size:1.3rem;margin:2rem 0 .5rem;border-bottom:2px solid var(--acc);padding-bottom:.2rem;break-after:avoid}
+h3{font-size:1.05rem;margin:1.2rem 0 .3rem;break-after:avoid}
+.sub{color:var(--mut);margin:0 0 1rem}
+.tag{display:inline-block;background:#b3261e;color:#fff;font-size:.75rem;font-weight:700;padding:.1rem .5rem;border-radius:.3rem;vertical-align:middle}
+.box{background:var(--box);border-left:4px solid var(--acc);padding:.6rem .9rem;margin:1rem 0;break-inside:avoid}
+.warn{background:var(--warn);border-left-color:#c77700}
+ol,ul{padding-left:1.4rem}li{margin:.25rem 0}
+code,kbd{font:.9em ui-monospace,Menlo,Consolas,monospace;background:#f1f3f5;padding:.05rem .3rem;border-radius:.2rem}
+pre{background:#f1f3f5;padding:.6rem .8rem;overflow:auto;border-radius:.3rem;font:.9em ui-monospace,Menlo,Consolas,monospace;break-inside:avoid}
+table{border-collapse:collapse;width:100%;margin:.6rem 0;break-inside:avoid}
+th,td{border:1px solid var(--line);padding:.35rem .5rem;text-align:left;vertical-align:top}
+th{background:var(--box)}
+@media (prefers-color-scheme:dark){:root{--ink:#e6ebf1;--mut:#a3afbf;--acc:#6db0f5;--bg:#14181e;--box:#1d2733;--warn:#33291a;--line:#364252}code,kbd,pre{background:#222b36}}
+@media print{:root{--ink:#000;--mut:#333;--acc:#0b5cad;--bg:#fff;--box:#eef4fb;--warn:#fff4dc}body{font-size:11pt}main{max-width:none;padding:0}a{color:inherit;text-decoration:none}}
+@page{margin:16mm}
+</style></head><body><main>
+
+<h1>KPA1500 SmartSDR Bridge <span class="tag">EXPERIMENTAL</span></h1>
+<p class="sub">Version 2.50 &middot; Design and on-air testing by KW4EX &middot; Guide for operators, not programmers</p>
+
+<h2>1. What it does</h2>
+<p>This program makes a <b>FlexRadio running SmartSDR</b> see your <b>Elecraft KPA1500</b> as two Flex accessories:</p>
+<ul>
+<li>a <b>Power Genius XL (PGXL)</b> amplifier: meters, Operate/Standby, and the amp following your transmit frequency;</li>
+<li>a <b>Tuner Genius XL (TGXL)</b> tuner: Operate, Bypass and Tune buttons, return-loss and forward-power meters, and the C1, L and C2 bars of the KPA1500's built-in tuner.</li>
+</ul>
+<p>The bridge runs on a computer on your home network. It talks to the amplifier over the network and to the radio over the network. <b>No serial cable is needed.</b></p>
+<div class="box warn"><b>Experimental.</b> This is new and has been tested on one station. Keep a hand on the amplifier and watch your first transmissions. It is shared as is, with no warranty (see the end of this guide).</div>
+
+<h2>2. What you need</h2>
+<ul>
+<li>A KPA1500 on your network (cabled to your router) and switched on.</li>
+<li>A FlexRadio running SmartSDR, on the same network.</li>
+<li>A computer that stays on while you operate: Windows 10 or 11 (tested), or a Mac, Linux PC or Raspberry Pi (<i>not yet released; see section 4</i>).</li>
+<li>Python 3.8 or newer. The Windows installer tells you if it is missing.</li>
+</ul>
+<div class="box"><b>Run only one bridge at a time.</b> The KPA1500 SDR Bridge (for Thetis and NereusSDR) and this one both control the amplifier. Each closes the other when it starts. Do not use this together with the Zeus KPA1500 add-on.</div>
+
+<h2>3. Install on Windows</h2>
+<ol>
+<li>Open the <b>Releases</b> page of the project on GitHub (the README has the link). The top entry marked <b>Latest</b> is the newest version.</li>
+<li>Under <b>Assets</b> click <b>Install_KPA1500_SmartSDR_Bridge.bat</b>. (Do not click "Source code".) If your browser warns that the file may be harmful, choose <b>Keep</b>.</li>
+<li>Open your <b>Downloads</b> folder and double-click the file. If Windows says it protected your PC, click <b>More info</b>, then <b>Run anyway</b>.</li>
+<li>Answer the questions. Press <kbd>Enter</kbd> to accept the answer shown in [brackets].
+<ul>
+<li><b>Folder:</b> the suggested <code>C:\RadioScripts</code> is fine. The bridge gets its own subfolder, <code>KPA1500_SmartSDR_Bridge</code>.</li>
+<li><b>Amplifier:</b> choose 1 (search) with the amp switched on. If it is not found, choose 2 and type the amp's IP address.</li>
+<li><b>Radio:</b> choose 1 (search). If the search ever fails on your network, choose 2 and type the radio's IP address.</li>
+<li><b>Shortcuts and firewall:</b> say yes to the Desktop shortcut and to opening the firewall ports. Windows asks you to confirm.</li>
+</ul></li>
+<li>At the end say yes to <b>Start the bridge now</b>. A small bridge window opens. Leave it open.</li>
+</ol>
+<p><b>Upgrading:</b> run the new installer over the old one. It offers to keep your settings and saves the old program files as <code>.bak</code> copies.</p>
+
+<h2>4. Install on Mac, Linux or Raspberry Pi <span class="tag">NOT YET RELEASED</span></h2>
+<p>An installer for these is being tested. It is not on the Releases page yet. When it is, the steps are:</p>
+<ol>
+<li>Download <code>Install_KPA1500_SmartSDR_Bridge.sh</code>.</li>
+<li>Open <b>Terminal</b> and type <code>bash </code> (with a space), drag the file into the Terminal window, press <kbd>Enter</kbd>.</li>
+<li>Answer the same questions as on Windows. The suggested folder is <code>RadioScripts</code> in your home folder.</li>
+<li>Say yes to <b>start automatically</b>. On Linux and the Pi this installs a service that restarts the bridge if it stops. On a Mac it adds a login item.</li>
+</ol>
+<div class="box"><b>Mac note:</b> a sleeping Mac stops the bridge, and a closed lid on battery power puts it to sleep. For an always-on bridge, a Raspberry Pi is the robust choice.</div>
+
+<h2>5. First run in SmartSDR</h2>
+<ol>
+<li>Switch on the amplifier and the radio, and start SmartSDR.</li>
+<li>Start the bridge (Desktop shortcut or <code>start_kpa_smartsdr_bridge.bat</code>).</li>
+<li>Within about 20 seconds SmartSDR shows the <b>PGXL</b> and <b>TGXL</b> in its accessory panels, and the Applet window of the bridge shows <code>Flex: &lt;your radio&gt;</code>.</li>
+<li>To check, open <code>http://127.0.0.1:8080/flex</code> in a browser on the bridge computer. It shows the radio login and meters.</li>
+</ol>
+
+<h2>6. Using it</h2>
+<table>
+<tr><th>In SmartSDR</th><th>What happens</th></tr>
+<tr><td>Amp <b>Operate / Standby</b></td><td>The KPA1500 switches to the same state.</td></tr>
+<tr><td>Tuner <b>Operate / Bypass</b></td><td>The KPA1500's tuner is put in line or bypassed.</td></tr>
+<tr><td>Tuner <b>Tune</b></td><td>Starts a tune. Press <b>Tune again to cancel</b>. In Standby the bridge refuses to tune.</td></tr>
+<tr><td>Change band or frequency</td><td>The amplifier follows the transmit slice by itself.</td></tr>
+<tr><td>Meters</td><td>Forward power, reflected power, SWR, drain current and temperature for the amp; return loss and forward power for the tuner; C1, L and C2 bars.</td></tr>
+</table>
+<p>The bridge also has its own browser panel and a small <b>Applet</b> window (<code>Open_Applet.bat</code>) with the meters and buttons.</p>
+
+<h2>7. Settings</h2>
+<p>Open <code>start_kpa_smartsdr_bridge.bat</code> (Mac/Linux: <code>start_kpa_smartsdr_bridge.sh</code>) with Notepad or a text editor. The settings are at the top.</p>
+<table>
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td><code>AMP_IP</code></td><td><code>auto</code> searches for the amplifier. Or type its address.</td></tr>
+<tr><td><code>FLEX_RADIO_IP</code></td><td><code>auto</code> searches for the radio. Type an address to skip the search. Leave empty to not log in to the radio.</td></tr>
+<tr><td><code>FLEX_RADIO_FALLBACK_IP</code></td><td>Used only if the search finds nothing.</td></tr>
+<tr><td><code>FLEX_INTERLOCK</code></td><td><code>1</code> makes the radio wait for the amp before it transmits (experimental). Default <code>0</code>.</td></tr>
+<tr><td><code>FLEX_VERBOSE</code></td><td><code>1</code> logs every message to and from the radio. Use it when something does not work.</td></tr>
+</table>
+<p>Save the file and start the bridge again. To stop it: <code>Stop_Bridge.bat</code>, or press <kbd>Q</kbd> in the bridge window.</p>
+
+<h2>8. If something does not work</h2>
+<table>
+<tr><th>Problem</th><th>Try this</th></tr>
+<tr><td>SmartSDR shows no PGXL or TGXL</td><td>Is the radio switched on and on the same network? Run <code>KPA_Network_Check.bat</code>. Make sure the firewall ports were opened (TCP 9008, TCP 9010, UDP 4992). Type the radio's address into <code>FLEX_RADIO_IP</code>.</td></tr>
+<tr><td>The amp is not found</td><td>Switch it on (not asleep) and check the network cable. Type its IP address into <code>AMP_IP</code>.</td></tr>
+<tr><td>Meters are blank</td><td>Wait 20 seconds after SmartSDR starts. Restart the bridge.</td></tr>
+<tr><td>Tune does nothing</td><td>The amplifier must be in Operate, not Standby.</td></tr>
+<tr><td>Amp does not follow frequency</td><td>It follows the radio's <b>transmit slice</b>. If Thetis or TCI is also running, the Thetis connection takes over.</td></tr>
+<tr><td>"Address already in use"</td><td>Another bridge is running. Close it, or just start again: the start file closes an older bridge first.</td></tr>
+</table>
+<p>For more detail, set <code>FLEX_VERBOSE</code> to <code>1</code>, reproduce the problem, and look at <code>kpa1500_bridge.log</code> in the install folder.</p>
+
+<h2>9. Uninstall</h2>
+<ol>
+<li>Double-click <code>Uninstall_KPA1500_SmartSDR_Bridge.bat</code> in the install folder (Mac/Linux: <code>uninstall_kpa_smartsdr_bridge.sh</code>).</li>
+<li>It stops the bridge and removes the shortcuts, the firewall rules and the auto-start entry.</li>
+<li>When asked, answer <b>y</b> to delete the bridge's own files. It never deletes the folder or anything else in it.</li>
+</ol>
+
+<h2>No warranty &mdash; use at your own risk</h2>
+<p>Shared by one radio operator, <b>as is</b>. There is <b>no warranty of any kind</b>: no promise that it works, that it is safe, or that it suits your equipment or purpose. Amplifiers, radios and antennas can be damaged, and RF can be dangerous. You are responsible for checking that it behaves correctly with your own station and for operating within your license. The author is not liable for any damage or loss. Not made, approved or supported by Elecraft or FlexRadio. "FlexRadio", "SmartSDR", "Power Genius" and "Tuner Genius" belong to their owners; they are used here only to say what this works with.</p>
+<p>73 de KW4EX</p>
+</main></body></html>
