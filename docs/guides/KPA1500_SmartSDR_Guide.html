@@ -26,7 +26,7 @@ th{background:var(--box)}
 </style></head><body><main>
 
 <h1>KPA1500 SmartSDR Bridge <span class="tag">EXPERIMENTAL</span></h1>
-<p class="sub">Version 2.50 &middot; Design and on-air testing by KW4EX &middot; Guide for operators, not programmers</p>
+<p class="sub">Version 2.51 &middot; Design and on-air testing by KW4EX &middot; Guide for operators, not programmers</p>
 
 <h2>1. What it does</h2>
 <p>This program makes a <b>FlexRadio running SmartSDR</b> see your <b>Elecraft KPA1500</b> as two Flex accessories:</p>
@@ -103,7 +103,31 @@ th{background:var(--box)}
 </table>
 <p>Save the file and start the bridge again. To stop it: <code>Stop_Bridge.bat</code>, or press <kbd>Q</kbd> in the bridge window.</p>
 
-<h2>8. If something does not work</h2>
+<h2>8. Over-drive protection</h2>
+<p>Too much drive into the amplifier can damage it. This protection watches the drive going <b>into</b> the KPA1500 and acts when it is over a limit you set. <b>It helps; it does not replace care. The amplifier's own protection stays the last line of defence.</b></p>
+<table>
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Limit (W)</td><td>One overall limit for the drive into the amplifier. Empty, 0 or <code>off</code> = protection off.</td></tr>
+<tr><td>If it goes over</td><td><b>Ignore</b>: nothing. <b>Warn</b>: a red message (panel bar, Applet banner, status line, log); nothing is changed. <b>Hold at the limit</b>: the same warning, and the bridge puts the radio's RF power setting back to the limit before you transmit. If the measured drive still stays over the limit for about 1.2 seconds more, the amp is put in STANDBY and stays there until you lower the drive and press OPERATE.</td></tr>
+<tr><td>Radio full power (W)</td><td>The radio's RF power setting is a percent of its full power. Default 100 (most FlexRadios). Used to turn the setting into watts.</td></tr>
+</table>
+<h3>Where to set it</h3>
+<ol>
+<li>Open the bridge's browser panel (<code>http://127.0.0.1:8080</code>), click the gear (Settings) and find <b>Over-drive protection</b>. Or open the Applet window and choose <b>Look</b>, then <b>Safety: over-drive protection</b>.</li>
+<li>Type the <b>Limit</b> in watts, for example 80.</li>
+<li>Choose <b>If it goes over</b>: Warn is a good first choice.</li>
+<li>Check <b>Radio full power</b>. Leave it at 100 for a 100 W radio.</li>
+</ol>
+<p>A new install starts with <b>Warn</b> and no limit, so nothing happens until you type a number.</p>
+<div class="box"><b>Good to know</b>
+<ul>
+<li>It only works while the amp is in <b>OPERATE</b>. In STANDBY, and while the amp tunes its own ATU, the limit is ignored on purpose, so you can tune with full radio power.</li>
+<li>Only the amp's own input-power reading is judged. Short peaks (under 0.8 second) are ignored, and the drive must be about 10 % + 1 W over the limit before it counts: that margin is on purpose.</li>
+<li>The bridge changes the radio's RF power at most once every 1.5 seconds, so it does not fight SmartSDR or you.</li>
+<li>The radio's TUNE power is not changed. A tune through the amp in OPERATE is still judged by the measured drive.</li>
+</ul></div>
+
+<h2>9. If something does not work</h2>
 <table>
 <tr><th>Problem</th><th>Try this</th></tr>
 <tr><td>SmartSDR shows no PGXL or TGXL</td><td>Is the radio switched on and on the same network? Run <code>KPA_Network_Check.bat</code>. Make sure the firewall ports were opened (TCP 9008, TCP 9010, UDP 4992). Type the radio's address into <code>FLEX_RADIO_IP</code>.</td></tr>
@@ -111,11 +135,13 @@ th{background:var(--box)}
 <tr><td>Meters are blank</td><td>Wait 20 seconds after SmartSDR starts. Restart the bridge.</td></tr>
 <tr><td>Tune does nothing</td><td>The amplifier must be in Operate, not Standby.</td></tr>
 <tr><td>Amp does not follow frequency</td><td>It follows the radio's <b>transmit slice</b>. If Thetis or TCI is also running, the Thetis connection takes over.</td></tr>
+<tr><td>Over-drive protection says it is waiting</td><td>It only works while the amp is in OPERATE. In STANDBY, and while the amp tunes its own ATU, the limit is ignored on purpose.</td></tr>
+<tr><td>The radio's RF power setting is never read</td><td>The bridge must be logged in to the FlexRadio (the Applet shows <code>Flex: ...</code>). The measured-drive check still works without it.</td></tr>
 <tr><td>"Address already in use"</td><td>Another bridge is running. Close it, or just start again: the start file closes an older bridge first.</td></tr>
 </table>
 <p>For more detail, set <code>FLEX_VERBOSE</code> to <code>1</code>, reproduce the problem, and look at <code>kpa1500_bridge.log</code> in the install folder.</p>
 
-<h2>9. Uninstall</h2>
+<h2>10. Uninstall</h2>
 <ol>
 <li>Double-click <code>Uninstall_KPA1500_SmartSDR_Bridge.bat</code> in the install folder (Mac/Linux: <code>uninstall_kpa_smartsdr_bridge.sh</code>).</li>
 <li>It stops the bridge and removes the shortcuts, the firewall rules and the auto-start entry.</li>

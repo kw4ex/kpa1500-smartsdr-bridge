@@ -4,11 +4,12 @@
 
 Makes a **FlexRadio running SmartSDR** show your **Elecraft KPA1500** as a **Power Genius XL** amplifier and a **Tuner Genius XL** tuner. No serial cable needed: the bridge talks to the amplifier and the radio over your network.
 
-Design and on-air testing by KW4EX. Version 2.50.
+Design and on-air testing by KW4EX. Version 2.51.
 
 ## What it does
 - **Amplifier (PGXL):** meters, Operate/Standby, and the amplifier follows the radio's transmit frequency by itself.
 - **Tuner (TGXL):** Operate, Bypass and Tune buttons (press Tune again to cancel), return-loss and forward-power meters, and the C1, L and C2 bars of the KPA1500's tuner.
+- **Over-drive protection (new in 2.51):** one limit in watts for the drive into the amplifier. It warns, or also puts the radio's RF power back to the limit and, if the drive stays over it, puts the amp in STANDBY. Off until you type a limit. See the guide.
 - Shows the connected radio's name in the bridge's small **Applet** window; browser control panel.
 - Starting a new bridge closes one that is already running; `Stop_Bridge.bat` closes it cleanly.
 
