@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KPA1500 SmartSDR Bridge - Raspberry Pi guide</title>
+<style>
+:root{--ink:#1c2430;--mut:#566273;--acc:#0b5cad;--bg:#fff;--box:#eef4fb;--warn:#fff4dc;--line:#cfd8e3}
+*{box-sizing:border-box}
+body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);margin:0}
+main{max-width:46rem;margin:0 auto;padding:1.5rem 1rem 3rem}
+h1{font-size:1.8rem;margin:.2rem 0}
+h2{font-size:1.3rem;margin:2rem 0 .5rem;border-bottom:2px solid var(--acc);padding-bottom:.2rem;break-after:avoid}
+h3{font-size:1.05rem;margin:1.2rem 0 .3rem;break-after:avoid}
+.sub{color:var(--mut);margin:0 0 1rem}
+.tag{display:inline-block;background:#b3261e;color:#fff;font-size:.75rem;font-weight:700;padding:.1rem .5rem;border-radius:.3rem;vertical-align:middle}
+.box{background:var(--box);border-left:4px solid var(--acc);padding:.6rem .9rem;margin:1rem 0;break-inside:avoid}
+.warn{background:var(--warn);border-left-color:#c77700}
+ol,ul{padding-left:1.4rem}li{margin:.25rem 0}
+code,kbd{font:.9em ui-monospace,Menlo,Consolas,monospace;background:#f1f3f5;padding:.05rem .3rem;border-radius:.2rem}
+pre{background:#f1f3f5;padding:.6rem .8rem;overflow:auto;border-radius:.3rem;font:.9em ui-monospace,Menlo,Consolas,monospace;break-inside:avoid}
+table{border-collapse:collapse;width:100%;margin:.6rem 0;break-inside:avoid}
+th,td{border:1px solid var(--line);padding:.35rem .5rem;text-align:left;vertical-align:top}
+th{background:var(--box)}
+@media (prefers-color-scheme:dark){:root{--ink:#e6ebf1;--mut:#a3afbf;--acc:#6db0f5;--bg:#14181e;--box:#1d2733;--warn:#33291a;--line:#364252}code,kbd,pre{background:#222b36}}
+@media print{:root{--ink:#000;--mut:#333;--acc:#0b5cad;--bg:#fff;--box:#eef4fb;--warn:#fff4dc}body{font-size:11pt}main{max-width:none;padding:0}a{color:inherit;text-decoration:none}}
+@page{margin:16mm}
+</style></head><body><main>
+
+<h1>Raspberry Pi version <span class="tag">EXPERIMENTAL</span></h1>
+<p class="sub">KPA1500 SmartSDR Bridge on a Raspberry Pi &middot; a ready-made SD card that starts the bridge by itself</p>
+
+<h2>What you get</h2>
+<p>You write one file to a microSD card, put the card in a Raspberry Pi, and switch it on. About a minute later the bridge is running: SmartSDR shows your KPA1500 as a <b>PGXL</b> amplifier and a <b>TGXL</b> tuner. The Pi finds the amplifier and the radio by itself. If power is lost, it starts again by itself.</p>
+<div class="box warn"><b>Experimental.</b> This card image is new and has not been tested on a real Pi yet. If something does not work, see the last section. No warranty; see the end of this guide.</div>
+
+<h2>What you need</h2>
+<ul>
+<li>A Raspberry Pi 4 Model B (2 GB is enough), its power supply and a case. (A Pi 3B+ or Pi 5 also works.)</li>
+<li>A microSD card, 16 GB or larger (32 GB, A1/A2 or "high endurance", is a good choice).</li>
+<li>A computer with an SD card slot (or a USB card reader), with the Windows, Mac or Linux version of <b>Raspberry Pi Imager</b>.</li>
+<li>Your KPA1500 and your FlexRadio on the same network as the Pi. An <b>Ethernet cable</b> to the Pi is the most reliable; Wi-Fi also works.</li>
+</ul>
+
+<h2>1. Get the image file</h2>
+<ol>
+<li>Open the project's <b>Releases</b> page on GitHub and find the entry for the Raspberry Pi image. (While it is being tested it is not public: the owner gets it from the Releases page while signed in.)</li>
+<li>Under <b>Assets</b> click the file named <code>&hellip;KPA1500_SmartSDR_Bridge_Pi_v&hellip;.img.xz</code> (the name ends in <code>.img.xz</code>). Save it in your Downloads folder. <b>Do not unzip it.</b> It is a large file (a few hundred MB).</li>
+</ol>
+
+<h2>2. Install Raspberry Pi Imager (once)</h2>
+<ol>
+<li>Go to <code>raspberrypi.com/software</code> and click <b>Download for Windows</b> (or your system).</li>
+<li>Double-click the downloaded file and follow the installer. Open <b>Raspberry Pi Imager</b>.</li>
+</ol>
+
+<h2>3. Write the card</h2>
+<ol>
+<li>Put the microSD card in your computer's slot (or card reader). <b>Everything on the card will be erased.</b> Copy anything you want to keep first.</li>
+<li>In Imager choose your Raspberry Pi model, if it asks.</li>
+<li>Click <b>Choose OS</b>, scroll to the bottom, click <b>Use custom</b>, and pick the <code>.img.xz</code> file from Downloads.</li>
+<li>Click <b>Choose Storage</b> and pick your SD card. Check the size carefully so that you do not pick another drive.</li>
+<li>Click <b>Next</b>. If Imager offers <b>OS customisation</b>, click <b>No</b> (this image has its own settings; you set them in step 4).</li>
+<li>Confirm that the card will be erased. Wait until it says the write is finished (a few minutes), then click <b>Continue</b>.</li>
+</ol>
+<div class="box"><b>Windows may say</b> "You need to format the disk in drive ... before you can use it". That is normal: click <b>Cancel</b>. Never click Format.</div>
+
+<h2>4. Put in your settings (only if you use Wi-Fi, or want your own panel password)</h2>
+<p>If the Pi will use an <b>Ethernet cable</b> and you are happy with a password made for you, skip to step 5.</p>
+<ol>
+<li>If the card's drive is gone, take the card out and put it back in. A small drive named <b>bootfs</b> appears (it may be the only one you can see).</li>
+<li>Open <b>bootfs</b> and open the file <code>kpa-setup.txt</code> with Notepad (or any text editor).</li>
+<li>After <code>wifi_name=</code> type your Wi-Fi network name; after <code>wifi_password=</code> type its password. Leave <code>wifi_country=US</code> unless you are elsewhere.</li>
+<li>If you want your own panel password, type letters and numbers after <code>panel_password=</code>. If you leave it empty the Pi makes one.</li>
+<li>Save the file. Eject the card (right-click the drive, <b>Eject</b>). When the Pi has read the file, it <b>removes your Wi-Fi password from it</b>.</li>
+</ol>
+<p>Your Wi-Fi password is typed only into the card in your own hands. It is not part of the image on GitHub.</p>
+
+<h2>5. Start the Pi</h2>
+<ol>
+<li>Put the card in the Pi (the slot is on the underside). Plug in the Ethernet cable if you use one.</li>
+<li>Connect the power supply. The red light comes on and the green light flickers.</li>
+<li>Wait <b>two minutes</b> the first time (it sets itself up, and joins your Wi-Fi if you filled that in).</li>
+</ol>
+
+<h2>6. Check that it works</h2>
+<ol>
+<li>Switch on the KPA1500 and the radio, and start SmartSDR. Within about 20 seconds SmartSDR shows the <b>PGXL</b> and <b>TGXL</b>.</li>
+<li>Open a browser on any computer on your network and go to <code>http://kpa-bridge.local:8080</code>. The panel asks for the password and shows the amplifier meters and buttons.</li>
+<li>Where is the password? Take the card out later and open <code>KPA_Bridge_Info.txt</code> on the <b>bootfs</b> drive. It holds the full panel address with the password in it, and it is refreshed at every start. (If you typed your own password in step 4, it is that one.)</li>
+</ol>
+
+<h2>Updating the bridge later</h2>
+<ol>
+<li>Download the new <code>kpa1500_sdr_bridge.py</code> and <code>kpa1500_flex_emulation.py</code> from the project.</li>
+<li>With the card in your computer, make a folder named <code>update</code> on the <b>bootfs</b> drive and put the two files in it.</li>
+<li>Put the card back in the Pi and start it. It copies the files in, restarts the bridge and renames the folder <code>update_done_&hellip;</code>.</li>
+</ol>
+
+<h2>If something does not work</h2>
+<table>
+<tr><th>Problem</th><th>Try this</th></tr>
+<tr><td>No PGXL/TGXL in SmartSDR after 3 minutes</td><td>Is the Pi connected to the same network as the radio (Ethernet cable plugged in, or Wi-Fi joined)? Open <code>http://kpa-bridge.local:8080</code>; if that page does not open, the Pi is not on your network.</td></tr>
+<tr><td><code>kpa-bridge.local</code> does not open</td><td>Use the address line in <code>KPA_Bridge_Info.txt</code> (it shows the Pi's number address), or look for "kpa-bridge" in your router's device list.</td></tr>
+<tr><td>Wi-Fi did not connect</td><td>Check the name and password in <code>kpa-setup.txt</code> (capital letters count) and try again, or use an Ethernet cable once. A 5 GHz-only network needs the right <code>wifi_country</code>.</td></tr>
+<tr><td>The amp is not found</td><td>Switch it on (not asleep) and check its network cable and that it is on the same network.</td></tr>
+<tr><td>Nothing happens at all</td><td>Re-write the card (step 3). If it still fails, keep the card, and send <code>KPA_Bridge_Info.txt</code> and what you saw to the project's Issues page.</td></tr>
+</table>
+<div class="box"><b>Only one bridge at a time.</b> If you also run the bridge on a PC or Mac, close it first. Two bridges fight over the amplifier.</div>
+
+<h2>No warranty &mdash; use at your own risk</h2>
+<p>Shared by one radio operator, <b>as is</b>. There is <b>no warranty of any kind</b>. Amplifiers, radios and antennas can be damaged, and RF can be dangerous. You are responsible for checking that it behaves correctly with your own station and for operating within your license. Not made, approved or supported by Elecraft, FlexRadio or the Raspberry Pi Foundation. 73 de KW4EX</p>
+</main></body></html>
