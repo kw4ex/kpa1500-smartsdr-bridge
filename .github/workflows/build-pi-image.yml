@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MIT
+# Builds the Raspberry Pi SD card image (EXPERIMENTAL) and attaches it to a DRAFT release,
+# which only the repository owner can see. Run it from the Actions tab: Build Raspberry Pi image > Run workflow.
+name: Build Raspberry Pi image
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Bridge version for the file name, e.g. 2.51"
+        required: true
+        default: "2.51"
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Put the bridge files into the image recipe
+        run: cp pi/payload/* pi/stage-kpa/00-kpa/files/
+      - name: Build the image (about 40 minutes)
+        id: build
+        uses: usimd/pi-gen-action@v1
+        with:
+          image-name: KPA1500_SmartSDR_Bridge_Pi_v${{ inputs.version }}
+          pi-gen-version: arm64
+          release: bookworm
+          stage-list: stage0 stage1 stage2 ./pi/stage-kpa
+          export-last-stage-only: true
+          hostname: kpa-bridge
+          username: kpaadmin
+          password: ${{ github.run_id }}-${{ github.run_attempt }}-change
+          enable-ssh: 1
+          locale: en_US.UTF-8
+          timezone: America/New_York
+          compression: xz
+          verbose-output: false
+      - name: Attach it to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMG: ${{ steps.build.outputs.image-path }}
+          V: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          ls -l "$IMG"
+          gh release create "pi-image-test-v${V}-${{ github.run_number }}" "$IMG" --draft --prerelease \
+            --title "TEST: Raspberry Pi image v${V} (draft, not public)" \
+            --notes "Experimental Raspberry Pi SD card image. Draft: only the repository owner sees it."

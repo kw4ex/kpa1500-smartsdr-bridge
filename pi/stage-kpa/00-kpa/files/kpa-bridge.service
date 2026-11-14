@@ -1,0 +1,17 @@
+[Unit]
+Description=KPA1500 SmartSDR Bridge (experimental)
+After=network-online.target avahi-daemon.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kpa
+WorkingDirectory=/opt/kpa-bridge
+EnvironmentFile=/etc/kpa-bridge.conf
+ExecStartPre=+/usr/local/sbin/kpa-apply
+ExecStart=/usr/bin/python3 /opt/kpa-bridge/kpa1500_sdr_bridge.py --replace --amp-ip auto --flex-emulate --flex-radio-ip auto $OTHER_FLAGS
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

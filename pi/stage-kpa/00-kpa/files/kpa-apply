@@ -1,0 +1,70 @@
+#!/bin/bash
+# KPA1500 SmartSDR Bridge - applies the settings from kpa-setup.txt (on the card's boot drive)
+# Runs at every start, before the bridge. Safe to run again: it only acts on what you filled in.
+BOOT="${KPA_BOOT:-/boot/firmware}"
+CONF="${KPA_CONF:-/etc/kpa-bridge.conf}"
+SETUP="$BOOT/kpa-setup.txt"
+INFO="$BOOT/KPA_Bridge_Info.txt"
+LOG="${KPA_LOG:-/var/log/kpa-apply.log}"
+say() { echo "$(date '+%F %T') $*" >> "$LOG"; }
+getv() { sed -n "s/^$1=\(.*\)$/\1/p" "$SETUP" 2>/dev/null | head -n 1 | tr -d '\r'; }
+[ -f "$CONF" ] || echo 'OTHER_FLAGS=' > "$CONF"
+TOKEN="$(sed -n 's/.*--web-token \([A-Za-z0-9]*\).*/\1/p' "$CONF" | head -n 1)"
+CHANGED=0
+
+if [ -f "$SETUP" ]; then
+    WN="$(getv wifi_name)"; WP="$(getv wifi_password)"; WC="$(getv wifi_country)"; PP="$(getv panel_password)"
+    PP="$(printf '%s' "$PP" | tr -cd 'A-Za-z0-9')"
+    if [ -n "$WN" ]; then
+        say "Wi-Fi: joining '$WN'"
+        if command -v raspi-config >/dev/null 2>&1; then raspi-config nonint do_wifi_country "${WC:-US}" >/dev/null 2>&1; fi
+        command -v rfkill >/dev/null 2>&1 && rfkill unblock wifi
+        if command -v nmcli >/dev/null 2>&1; then
+            ok=0
+            for i in 1 2 3 4 5 6; do
+                nmcli radio wifi on >/dev/null 2>&1
+                if nmcli device wifi connect "$WN" password "$WP" >/dev/null 2>&1 || nmcli device wifi connect "$WN" >/dev/null 2>&1; then ok=1; break; fi
+                sleep 8
+            done
+            say "Wi-Fi: $([ $ok = 1 ] && echo joined || echo 'could not join (wrong name or password? is it in range?)')"
+        fi
+        # the password does not stay on the card
+        sed -i -e "s/^wifi_password=.*/wifi_password=/" -e "s/^wifi_name=.*/wifi_name=/" "$SETUP"
+        sed -i "1i # $(date '+%F'): the Wi-Fi network '$WN' was set up (the password was removed from this file)." "$SETUP"
+    fi
+    if [ -n "$PP" ]; then
+        TOKEN="$PP"; CHANGED=1
+        sed -i "s/^panel_password=.*/panel_password=/" "$SETUP"
+    fi
+fi
+
+if [ -z "$TOKEN" ]; then
+    TOKEN="$(head -c 6 /dev/urandom | od -An -tx1 | tr -d ' \n')"; CHANGED=1
+fi
+if [ "$CHANGED" = 1 ] || ! grep -q -- "--web-token" "$CONF"; then
+    echo "OTHER_FLAGS=--web-bind 0.0.0.0 --web-token $TOKEN" > "$CONF"
+    # the same word is the password of the Pi's own login (user kpaadmin), for troubleshooting over SSH
+    if id kpaadmin >/dev/null 2>&1 && [ -z "$KPA_BOOT" ]; then echo "kpaadmin:$TOKEN" | chpasswd; fi
+    say "panel password set"
+fi
+
+# update: drop kpa1500_sdr_bridge.py and kpa1500_flex_emulation.py into a folder named 'update' on the boot drive
+UPD="$BOOT/update"
+if [ -d "$UPD" ] && [ -f "$UPD/kpa1500_sdr_bridge.py" ]; then
+    DEST="${KPA_DEST:-/opt/kpa-bridge}"
+    cp -f "$UPD"/kpa1500_*.py "$DEST/" && say "program files updated from the boot drive"
+    mv "$UPD" "$BOOT/update_done_$(date +%Y%m%d_%H%M%S)"
+fi
+
+IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+cat > "$INFO" <<EOT
+KPA1500 SmartSDR Bridge on this Raspberry Pi
+============================================
+Panel (from any computer on your network):  http://$(hostname).local:8080/?t=$TOKEN
+Or by address:                              http://${IP:-<not connected yet>}:8080/?t=$TOKEN
+Panel password:                             $TOKEN
+Pi login for troubleshooting (SSH):         user kpaadmin, same password
+Updated at:                                 $(date '+%F %T')
+(This file is rewritten at every start. If the address above is empty, the Pi is not on your network yet.)
+EOT
+exit 0

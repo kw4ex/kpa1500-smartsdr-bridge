@@ -1,0 +1,12 @@
+# KPA1500 SmartSDR Bridge - your settings. Fill in what you need, save, then put the card in the Pi.
+# Only letters, numbers and normal characters. Leave a line empty to skip it.
+#
+# Wi-Fi: leave empty if the Pi is on an Ethernet cable.
+wifi_name=
+wifi_password=
+# Two-letter country code of the place you operate (US, CA, GB, DE ...):
+wifi_country=US
+#
+# The password for the bridge's browser panel (letters and numbers only).
+# Leave empty and the Pi makes one for you (it is written in KPA_Bridge_Info.txt).
+panel_password=
