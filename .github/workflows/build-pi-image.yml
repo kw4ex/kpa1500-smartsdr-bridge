@@ -23,8 +23,8 @@ jobs:
         uses: usimd/pi-gen-action@v1
         with:
           image-name: KPA1500_SmartSDR_Bridge_Pi_v${{ inputs.version }}
-          pi-gen-version: arm64
-          release: bookworm
+          pi-gen-version: master
+          release: trixie
           stage-list: stage0 stage1 stage2 ./pi/stage-kpa
           export-last-stage-only: true
           hostname: kpa-bridge
